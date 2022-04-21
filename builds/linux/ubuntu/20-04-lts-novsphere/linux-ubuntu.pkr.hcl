@@ -45,12 +45,16 @@ locals {
 source "vmware-iso" "linux-ubuntu" {
   iso_url = "https://releases.ubuntu.com/20.04/ubuntu-20.04.4-live-server-amd64.iso"
 
+  output_directory = "output/${var.vm_guest_os_family}-${var.vm_guest_os_name}-${var.vm_guest_os_version}-v${local.build_version}"
+
   // vCenter Server Endpoint Settings and Credentials
   insecure_connection = var.vsphere_insecure_connection
 
   // Virtual Machine Settings
   guest_os_type        = var.vm_guest_os_type
   vm_name              = "${var.vm_guest_os_family}-${var.vm_guest_os_name}-${var.vm_guest_os_version}-v${local.build_version}"
+
+  memory = "1024"
 
   // Removable Media Settings
 
@@ -66,8 +70,8 @@ source "vmware-iso" "linux-ubuntu" {
 
   boot_wait     = var.vm_boot_wait
   boot_command = [
-    "<esc><wait>",
-    "linux /casper/vmlinuz --- autoinstall ${local.data_source_command}",
+    "<enter><enter><f6><esc><wait>",
+    "linux /casper/vmlinuz --- autoinstall ds=nocloud-net;seedfrom=http://{{ .HTTPIP }}:{{ .HTTPPort }}/",
     "<enter><wait>",
     "initrd /casper/initrd",
     "<enter><wait>",
