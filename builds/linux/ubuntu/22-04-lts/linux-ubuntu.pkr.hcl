@@ -42,56 +42,32 @@ locals {
 //  BLOCK: source
 //  Defines the builder configuration blocks.
 
-source "vsphere-iso" "linux-ubuntu" {
+source "vmware-iso" "linux-ubuntu" {
+  iso_url = "https://releases.ubuntu.com/22.04/ubuntu-22.04-beta-live-server-amd64.iso"
+
+  output_directory = "output/${var.vm_guest_os_family}-${var.vm_guest_os_name}-${var.vm_guest_os_version}-v${local.build_version}"
 
   // vCenter Server Endpoint Settings and Credentials
-  vcenter_server      = var.vsphere_endpoint
-  username            = var.vsphere_username
-  password            = var.vsphere_password
   insecure_connection = var.vsphere_insecure_connection
-
-  // vSphere Settings
-  datacenter = var.vsphere_datacenter
-  cluster    = var.vsphere_cluster
-  datastore  = var.vsphere_datastore
-  folder     = var.vsphere_folder
 
   // Virtual Machine Settings
   guest_os_type        = var.vm_guest_os_type
   vm_name              = "${var.vm_guest_os_family}-${var.vm_guest_os_name}-${var.vm_guest_os_version}-v${local.build_version}"
-  firmware             = var.vm_firmware
-  CPUs                 = var.vm_cpu_sockets
-  cpu_cores            = var.vm_cpu_cores
-  CPU_hot_plug         = var.vm_cpu_hot_add
-  RAM                  = var.vm_mem_size
-  RAM_hot_plug         = var.vm_mem_hot_add
-  cdrom_type           = var.vm_cdrom_type
-  disk_controller_type = var.vm_disk_controller_type
-  storage {
-    disk_size             = var.vm_disk_size
-    disk_thin_provisioned = var.vm_disk_thin_provisioned
-  }
-  network_adapters {
-    network      = var.vsphere_network
-    network_card = var.vm_network_card
-  }
-  vm_version           = var.common_vm_version
-  remove_cdrom         = var.common_remove_cdrom
-  tools_upgrade_policy = var.common_tools_upgrade_policy
-  notes                = "Version: v${local.build_version}\nBuilt on: ${local.build_date}\n${local.build_by}"
+
+  memory = "1024"
 
   // Removable Media Settings
-  iso_paths    = ["[${var.common_iso_datastore}] ${var.iso_path}/${var.iso_file}"]
+
   iso_checksum = "${var.iso_checksum_type}:${var.iso_checksum_value}"
   http_content = var.common_data_source == "http" ? local.data_source_content : null
   cd_content   = var.common_data_source == "disk" ? local.data_source_content : null
   cd_label     = var.common_data_source == "disk" ? "cidata" : null
 
   // Boot and Provisioning Settings
-  http_ip       = var.common_data_source == "http" ? var.common_http_ip : null
+
   http_port_min = var.common_data_source == "http" ? var.common_http_port_min : null
   http_port_max = var.common_data_source == "http" ? var.common_http_port_max : null
-  boot_order    = var.vm_boot_order
+
   boot_wait     = var.vm_boot_wait
   boot_command = [
     "c<wait>",
@@ -102,7 +78,7 @@ source "vsphere-iso" "linux-ubuntu" {
     "boot",
     "<enter>"
   ]
-  ip_wait_timeout  = var.common_ip_wait_timeout
+
   shutdown_command = "echo '${var.build_password}' | sudo -S -E shutdown -P now"
   shutdown_timeout = var.common_shutdown_timeout
 
@@ -117,25 +93,17 @@ source "vsphere-iso" "linux-ubuntu" {
   ssh_port           = var.communicator_port
   ssh_timeout        = var.communicator_timeout
 
-  // Template and Content Library Settings
-  convert_to_template = var.common_template_conversion
-  dynamic "content_library_destination" {
-    for_each = var.common_content_library_name != null ? [1] : []
-    content {
-      library     = var.common_content_library_name
-      description = "Version: v${local.build_version}\nBuilt on: ${local.build_date}\n${local.build_by}"
-      ovf         = var.common_content_library_ovf
-      destroy     = var.common_content_library_destroy
-      skip_import = var.common_content_library_skip_export
-    }
-  }
 }
 
 //  BLOCK: build
 //  Defines the builders to run, provisioners, and post-processors.
 
+
+//  BLOCK: build
+//  Defines the builders to run, provisioners, and post-processors.
+
 build {
-  sources = ["source.vsphere-iso.linux-ubuntu"]
+  sources = ["source.vmware-iso.linux-ubuntu"]
 
   provisioner "ansible" {
     playbook_file = "${path.cwd}/ansible/main.yml"
