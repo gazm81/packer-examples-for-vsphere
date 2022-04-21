@@ -688,6 +688,37 @@ menu_option_22() {
   echo "Done."
 }
 
+menu_option_23() {
+  INPUT_PATH="$SCRIPT_PATH"/builds/linux/ubuntu/20-04-lts-novsphere/
+  echo -e "\nCONFIRM: Build a Ubuntu Server 20.04 LTS Template for VMware vSphere?"
+  echo -e "\nContinue? (y/n)"
+  read -r REPLY
+  if [[ ! $REPLY =~ ^[Yy]$ ]]
+  then
+    exit 1
+  fi
+
+  ### Build a Ubuntu Server 20.04 LTS Template for VMware vSphere. ###
+  echo "Building a Ubuntu Server 20.04 LTS Template for VMware vSphere..."
+
+  ### Initialize HashiCorp Packer and required plugins. ###
+  echo "Initializing HashiCorp Packer and required plugins..."
+  packer init "$INPUT_PATH"
+
+  ### Start the Build. ###
+  echo "Starting the build...."
+  packer build -force \
+      -var-file="$CONFIG_PATH/vsphere.pkrvars.hcl" \
+      -var-file="$CONFIG_PATH/build.pkrvars.hcl" \
+      -var-file="$CONFIG_PATH/ansible.pkrvars.hcl" \
+      -var-file="$CONFIG_PATH/proxy.pkrvars.hcl" \
+      -var-file="$CONFIG_PATH/common.pkrvars.hcl" \
+      "$INPUT_PATH"
+
+  ### All done. ###
+  echo "Done."
+}
+
 press_enter() {
   cd "$SCRIPT_PATH"
   echo -n "Press Enter to continue."
@@ -777,6 +808,7 @@ until [ "$selection" = "0" ]; do
     20 ) clear ; menu_option_20 ; press_enter ;;
     21 ) clear ; menu_option_21 ; press_enter ;;
     22 ) clear ; menu_option_22 ; press_enter ;;
+    23 ) clear ; menu_option_23 ; press_enter ;;
     I ) clear ; info ; press_enter ;;
     Q ) clear ; exit ;;
     * ) clear ; incorrect_selection ; press_enter ;;
